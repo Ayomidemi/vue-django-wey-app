@@ -3,11 +3,11 @@
     <div class="max-w-7xl mx-auto">
       <div class="flex items-center justify-between">
         <div class="menu-left">
-          <a href="/" class="text-xl">Wey</a>
+          <a href="/feed" class="text-xl">Wey</a>
         </div>
 
         <div class="menu-center flex space-x-12">
-          <a href="/" class="text-purple-700">
+          <a href="/feed" class="text-purple-700">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -69,7 +69,7 @@
         </div>
 
         <div class="menu-right">
-          <a href="/">
+          <a href="/feed">
             <img src="https://i.pravatar.cc/40?img=70" class="rounded-full" />
           </a>
         </div>
