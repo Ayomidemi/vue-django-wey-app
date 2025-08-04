@@ -6,7 +6,7 @@
           <a href="/feed" class="text-xl">Wey</a>
         </div>
 
-        <div class="menu-center flex space-x-12">
+        <div class="menu-center flex space-x-12" v-if="userStore && userStore.isAuthenticated">
           <a href="/feed" class="text-purple-700">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -69,9 +69,20 @@
         </div>
 
         <div class="menu-right">
-          <a href="/feed">
-            <img src="https://i.pravatar.cc/40?img=70" class="rounded-full" />
-          </a>
+          <template v-if="userStore && userStore.isAuthenticated">
+            <a href="/feed">
+              <img src="https://i.pravatar.cc/40?img=70" class="rounded-full" />
+            </a>
+          </template>
+
+          <template v-else>
+            <RouterLink to="/login" class="mr-4 py-4 px-6 bg-gray-600 text-white rounded-lg"
+              >Log in</RouterLink
+            >
+            <RouterLink to="/signup" class="py-4 px-6 bg-purple-600 text-white rounded-lg"
+              >Sign up</RouterLink
+            >
+          </template>
         </div>
       </div>
     </div>
@@ -81,3 +92,34 @@
     <RouterView />
   </main>
 </template>
+
+<script>
+import axios from 'axios';
+import Toast from '@/components/Toast.vue';
+import { useUserStore } from '@/stores/user';
+
+export default {
+  components: {
+    Toast,
+  },
+
+  data() {
+    return {
+      userStore: null,
+    };
+  },
+
+  mounted() {
+    this.userStore = useUserStore();
+    this.userStore.initStore();
+
+    const token = this.userStore.access;
+
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+    } else {
+      axios.defaults.headers.common['Authorization'] = '';
+    }
+  },
+};
+</script>
