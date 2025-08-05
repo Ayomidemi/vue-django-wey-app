@@ -14,10 +14,11 @@
     </div>
 
     <div class="main-center col-span-1 md:col-span-2 space-y-4 order-1 md:order-2">
-      <div class="bg-white border border-gray-200 rounded-lg">
+      <form class="bg-white border border-gray-200 rounded-lg" @submit.prevent="submitForm" method="post">
         <div class="p-4">
           <textarea
             class="p-4 w-full bg-gray-100 rounded-lg"
+            v-model="body"
             placeholder="What are you thinking about?"></textarea>
         </div>
 
@@ -26,9 +27,9 @@
             >Attach image</a
           >
 
-          <a href="#" class="inline-block py-4 px-6 bg-purple-600 text-white rounded-lg">Post</a>
+          <button type="submit" class="inline-block py-4 px-6 bg-purple-600 text-white rounded-lg">Post</button>
         </div>
-      </div>
+      </form>
 
       <div class="p-4 bg-white border border-gray-200 rounded-lg">
         <div class="mb-6 flex items-center justify-between">
@@ -99,18 +100,23 @@
         </div>
       </div>
 
-      <div class="p-4 bg-white border border-gray-200 rounded-lg">
+      <div
+        class="p-4 bg-white border border-gray-200 rounded-lg"
+        v-for="post in posts"
+        :key="post.id">
         <div class="mb-6 flex items-center justify-between">
           <div class="flex items-center space-x-6">
             <img src="https://i.pravatar.cc/300?img=70" class="w-[40px] rounded-full" />
 
-            <p><strong>Code With Stein</strong></p>
+            <p>
+              <strong>{{ post.created_by.name }}</strong>
+            </p>
           </div>
 
-          <p class="text-gray-600">18 minutes ago</p>
+          <p class="text-gray-600">{{ post.created_at_formatted }} ago</p>
         </div>
 
-        <p>This is a test post from the feed view.</p>
+        <p>{{ post.body }}</p>
 
         <div class="my-6 flex justify-between">
           <div class="flex space-x-6">
@@ -176,14 +182,54 @@
 </template>
 
 <script>
+import axios from 'axios';
 import PeopleYouMayKnow from '../components/PeopleYouMayKnow.vue';
 import Trends from '../components/Trends.vue';
 
 export default {
   name: 'FeedView',
+
   components: {
     PeopleYouMayKnow,
     Trends,
+  },
+
+  data() {
+    return {
+      posts: [],
+      body: '',
+    };
+  },
+
+  mounted() {
+    this.getFeed();
+  },
+
+  methods: {
+    getFeed() {
+      axios
+        .get('/api/posts/')
+        .then((response) => {
+          this.posts = response.data.data;
+        })
+        .catch((error) => {
+          console.log('Feed error:', error);
+        });
+    },
+
+    submitForm() {
+      axios
+        .post('/api/posts/create/', {
+          body: this.body,
+        })
+        .then((response) => {
+          this.posts.unshift(response.data);
+          this.body = '';
+        })
+        .catch((error) => {
+          console.log('error', error);
+        });
+    },
   },
 };
 </script>
