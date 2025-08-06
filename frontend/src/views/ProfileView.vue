@@ -12,6 +12,29 @@
           <p class="text-xs text-gray-500">182 friends</p>
           <p class="text-xs text-gray-500">120 posts</p>
         </div>
+
+        <div class="mt-6 flex justify-around">
+          <button
+            v-if="userStore.id !== user.id"
+            class="inline-block py-4 px-6 bg-purple-600 text-white rounded-lg"
+            @click="sendFriendshipRequest">
+            Send friendship request
+          </button>
+
+          <button
+            v-if="userStore.id === user.id"
+            class="inline-block py-4 px-6 bg-purple-600 text-white rounded-lg"
+            @click="seeFriends">
+            See friends
+          </button>
+
+          <button
+            class="inline-block py-4 px-3 bg-red-600 text-xs text-white rounded-lg"
+            @click="logout"
+            v-if="userStore.id === user.id">
+            Log out
+          </button>
+        </div>
       </div>
     </div>
 
@@ -89,7 +112,6 @@ export default {
 
   watch: {
     '$route.params.id': {
-
       handler: function () {
         this.getFeed();
       },
@@ -99,6 +121,26 @@ export default {
   },
 
   methods: {
+    sendFriendshipRequest() {
+      axios
+        .post(`/api/friends/${this.$route.params.id}/request/`)
+        .then((response) => {
+          console.log('response', response);
+        })
+        .catch((error) => {
+          console.log('error', error);
+        });
+    },
+
+    seeFriends() {
+      this.$router.push({ name: 'friends', params: { id: this.$route.params.id } });
+    },
+
+    logout() {
+      this.userStore.removeToken();
+      this.$router.push('/login');
+    },
+
     getFeed() {
       axios
         .get(`/api/posts/profile/${this.$route.params.id}/`)
