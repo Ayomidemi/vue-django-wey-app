@@ -61,6 +61,12 @@
             </div>
           </template>
 
+          <template v-if="successMessage">
+            <div class="bg-green-300 text-white rounded-lg p-6">
+              <p>{{ successMessage }}</p>
+            </div>
+          </template>
+
           <div>
             <button 
               type="submit"
@@ -78,6 +84,7 @@
 
 <script>
 import { useToastStore } from '../stores/toast'
+import { useUserStore } from '../stores/user'
 import axios from 'axios'
 
 export default {
@@ -91,16 +98,19 @@ export default {
       },
       errors: [],
       isLoading: false,
+      successMessage: '',
     }
   },
 
   mounted() {
     this.toastStore = useToastStore()
+    this.userStore = useUserStore()
   },
 
   methods: {
     async submitForm() {
       this.errors = []
+      this.successMessage = ''
       this.isLoading = true
 
       // Client-side validation
@@ -134,23 +144,67 @@ export default {
         })
 
         if (response.data.message === 'success') {
-          this.toastStore.showToast(
-            5000,
-            'The user has been created successfully!',
-            'bg-green-500'
-          )
+          // Show success message in UI
+          this.successMessage = 'Account created successfully! You can now log in with your email and password.'
+          
+          // Try to show toast as well
+          try {
+            this.toastStore.showToast(
+              5000,
+              'Account created successfully! Logging you in...',
+              'bg-green-500'
+            )
+          } catch (toastError) {
+            console.log('Toast not available, using UI message instead')
+          }
 
-          // Reset form
-          this.form.name = ''
-          this.form.email = ''
-          this.form.password1 = ''
-          this.form.password2 = ''
+          // Log the user in after successful signup
+          try {
+            const loginResponse = await axios.post('/api/login/', {
+              email: this.form.email.trim(),
+              password: this.form.password1,
+            })
+            
+            // Use the store to set authentication
+            this.userStore.setToken(loginResponse.data)
+            
+            const meResponse = await axios.get('/api/me/')
+            this.userStore.setUserInfo(meResponse.data)
+            
+            // Reset form
+            this.form.name = ''
+            this.form.email = ''
+            this.form.password1 = ''
+            this.form.password2 = ''
+            
+            // Redirect to feed
+            this.$router.push('/feed')
+          } catch (loginError) {
+            console.error('Auto-login after signup failed:', loginError)
+            this.successMessage = 'Account created successfully! Please log in manually using your email and password.'
+            
+            try {
+              this.toastStore.showToast(
+                5000,
+                'Account created but auto-login failed. Please log in manually.',
+                'bg-yellow-500'
+              )
+            } catch (toastError) {
+              console.log('Toast not available, using UI message instead')
+            }
+          }
         } else {
-          this.toastStore.showToast(
-            5000,
-            'Something went wrong. Please try again later',
-            'bg-red-500'
-          )
+          this.errors.push('Something went wrong. Please try again later')
+          
+          try {
+            this.toastStore.showToast(
+              5000,
+              'Something went wrong. Please try again later',
+              'bg-red-500'
+            )
+          } catch (toastError) {
+            console.log('Toast not available, using UI message instead')
+          }
         }
       } catch (error) {
         console.error('Signup error:', error)
